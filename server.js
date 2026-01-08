@@ -158,28 +158,56 @@ router.post('/movimientos/entrada', async (req, res) => {
 // --- NUEVO: MOVIMIENTOS: SALIDA (BOTÓN ROJO) ---
 router.post('/movimientos/salida', async (req, res) => {
     const { id_uniforme, cantidad_salida, id_usuario } = req.body;
+    
+    // LOG DE CONTROL: Ver qué datos llegan desde el navegador
+    console.log("Datos recibidos:", { id_uniforme, cantidad_salida, id_usuario });
+
     let connection;
     try {
         connection = await db.promise().getConnection();
         await connection.beginTransaction();
 
-        const [stockActual] = await connection.query('SELECT Cantidad, Prenda, Talla FROM uniformes WHERE ID_Uniforme = ?', [id_uniforme]);
+        // 1. Obtener stock actual
+        const [rows] = await connection.query('SELECT Cantidad, Prenda, Talla FROM uniformes WHERE ID_Uniforme = ?', [id_uniforme]);
         
-        if (stockActual[0].Cantidad < cantidad_salida) {
-            return res.status(400).json({ error: 'Stock insuficiente.' });
+        if (rows.length === 0) {
+            console.error("Error: ID_Uniforme no existe en la DB:", id_uniforme);
+            await connection.rollback();
+            return res.status(404).json({ error: 'Uniforme no encontrado.' });
         }
 
-        await connection.query('UPDATE uniformes SET Cantidad = Cantidad - ? WHERE ID_Uniforme = ?', [cantidad_salida, id_uniforme]);
-        
+        const producto = rows[0];
+
+        // 2. Validar si hay suficiente
+        if (producto.Cantidad < cantidad_salida) {
+            await connection.rollback();
+            return res.status(400).json({ error: `Stock insuficiente. Disponible: ${producto.Cantidad}` });
+        }
+
+        // 3. ACTUALIZAR STOCK (La parte que no te está funcionando)
+        const [updateResult] = await connection.query(
+            'UPDATE uniformes SET Cantidad = Cantidad - ? WHERE ID_Uniforme = ?', 
+            [cantidad_salida, id_uniforme]
+        );
+        console.log("Resultado del UPDATE:", updateResult.affectedRows);
+
+        // 4. REGISTRAR MOVIMIENTO
+        // IMPORTANTE: Si id_usuario no existe en la tabla 'usuarios', esto fallará.
         await connection.query(
             'INSERT INTO movimientos (ID_Usuario, Tipo, Prenda, Talla, Cantidad, Stock_Resultante) VALUES (?, "SALIDA", ?, ?, ?, ?)', 
-            [id_usuario, stockActual[0].Prenda, stockActual[0].Talla, cantidad_salida, stockActual[0].Cantidad - cantidad_salida]
+            [id_usuario, producto.Prenda, producto.Talla, cantidad_salida, producto.Cantidad - cantidad_salida]
         );
         
         await connection.commit();
-        res.status(201).json({ mensaje: 'Retiro registrado.' });
-    } catch (e) { if (connection) await connection.rollback(); res.status(500).json({ error: 'Error.' }); }
-    finally { if (connection) connection.release(); }
+        res.status(201).json({ mensaje: 'Retiro registrado correctamente.' });
+
+    } catch (e) {
+        if (connection) await connection.rollback();
+        console.error("ERROR CRÍTICO EN SALIDA:", e.message);
+        res.status(500).json({ error: 'Error interno: ' + e.message });
+    } finally {
+        if (connection) connection.release();
+    }
 });
 
 // --- REPORTES ---
