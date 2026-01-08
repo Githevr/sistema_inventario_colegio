@@ -16,11 +16,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'TuClaveSecretaMuySeguraYSuperLarga
 
 // CONFIGURACIÓN PARA RAILWAY: Conexión mediante variables de entorno
 const db = mysql.createPool({
-    host: process.env.MYSQLHOST || 'localhost',
-    user: process.env.MYSQLUSER || 'root',
-    password: process.env.MYSQLPASSWORD || 'admin',
-    database: process.env.MYSQLDATABASE || 'inventario_uniformes',
-    port: process.env.MYSQLPORT || 3306,
+    host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+    user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'admin',
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'inventario_uniformes',
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
