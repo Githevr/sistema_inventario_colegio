@@ -215,9 +215,7 @@
         const token = localStorage.getItem('token');
         
         // Configuración automática de URL
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3001/api' 
-            : window.location.origin + '/api';
+        const API_URL = '/api';
 
         console.log("Conectando a API en:", API_URL);
 
