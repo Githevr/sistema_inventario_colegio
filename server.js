@@ -14,13 +14,14 @@ const PORT = process.env.PORT || 3001;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'TuClaveSecretaMuySeguraYSuperLarga_12345';
 
-// CONFIGURACIÓN PARA RAILWAY: Conexión mediante variables de entorno
+// CONFIGURACIÓN DE CONEXIÓN UNIFICADA
 const db = mysql.createPool({
-    host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+    // Esto intenta leer AMBOS formatos para que no falle nunca
+    host: process.env.DB_HOST || process.env.MYSQLHOST || 'tramway.proxy.rlwy.net',
     user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
-    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'admin',
-    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'inventario_uniformes',
-    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'zIMStXlpxCyEDaUDSgiIUYdIrEqmVTSy',
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'railway',
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 27211, 
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
