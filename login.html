@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Administrativo - Mis Talentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --insignia-azul: #5086c1;
+            --insignia-azul-dark: #2c5282;
+            --insignia-rojo: #e62429;
+            --insignia-amarillo: #f9d949;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: linear-gradient(135deg, var(--insignia-azul-dark) 0%, var(--insignia-azul) 100%);
+            overflow: hidden;
+        }
+
+        /* Fondo Decorativo */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--insignia-amarillo);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            opacity: 0.1;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            background: white;
+            margin: -80px auto 20px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+
+        .logo-container img { width: 100%; height: auto; }
+
+        h1 { color: var(--insignia-azul-dark); font-size: 1.5rem; margin-bottom: 10px; font-weight: 700; }
+        p.subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 30px; }
+
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            color: var(--insignia-azul-dark);
+            text-transform: uppercase;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            color: #94a3b8;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--insignia-azul);
+            box-shadow: 0 0 0 4px rgba(80, 134, 193, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: var(--insignia-azul-dark);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background: var(--insignia-rojo);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 36, 41, 0.3);
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            min-height: 20px;
+        }
+
+        .error { color: var(--insignia-rojo); font-weight: 600; }
+        .loading { color: var(--insignia-azul); }
+
+        .footer-text {
+            margin-top: 30px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo-container">
+            <img src="INSIGNIA_COLEGIO.png" alt="Insignia">
+        </div>
+        <h1>¡Bienvenido!</h1>
+        <p class="subtitle">Gestión de Inventario - Mis Talentos</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Usuario</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="usuario" required placeholder="Nombre de usuario">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">INGRESAR AL SISTEMA</button>
+            <p id="message"></p>
+        </form>
+
+        <p class="footer-text">Acceso restringido para personal autorizado.</p>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001/api';
+        const loginForm = document.getElementById('loginForm');
+        const message = document.getElementById('message');
+        const loginBtn = document.getElementById('loginBtn');
+
+        if (localStorage.getItem('token')) {
+            window.location.href = 'index.html';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            loginBtn.disabled = true;
+            loginBtn.style.opacity = '0.7';
+            message.textContent = 'Verificando credenciales...';
+            message.className = 'loading';
+
+            const usuario = document.getElementById('usuario').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Usuario: usuario, Contrasena: password })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.token) {
+                    message.textContent = result.mensaje || 'Error: Credenciales no válidas';
+                    message.className = 'error';
+                    loginBtn.disabled = false;
+                    loginBtn.style.opacity = '1';
+                    return;
+                }
+
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('usuario_actual', usuario);
+
+                message.textContent = '¡Acceso concedido!';
+                message.style.color = '#059669';
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 600);
+
+            } catch (error) {
+                message.textContent = 'Error de conexión con la base de datos.';
+                message.className = 'error';
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = '1';
+            }
+        });
+    </script>
+</body>
+</html>

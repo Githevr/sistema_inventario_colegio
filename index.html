@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.E.P. Mis Talentos - Sistema de Inventario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --insignia-rojo: #e62429;
+            --insignia-azul: #5086c1;
+            --insignia-azul-dark: #2c5282;
+            --insignia-amarillo: #f9d949;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+        }
+
+        body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--bg); color: var(--text-main); }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 20px; }
+        
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: linear-gradient(135deg, var(--insignia-azul-dark) 0%, var(--insignia-azul) 100%);
+            color: white; padding: 15px 30px; border-radius: 20px; margin-bottom: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid var(--insignia-amarillo);
+        }
+
+        .logo-section { display: flex; align-items: center; gap: 15px; }
+        .logo-img { width: 45px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
+        .user-profile {
+            display: flex; align-items: center; gap: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 18px; border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .user-avatar { 
+            width: 35px; height: 35px; background: var(--insignia-amarillo); 
+            color: var(--insignia-azul-dark); border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 800; font-size: 1rem;
+        }
+        .user-name { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.3px; }
+
+        .search-container { position: relative; flex-grow: 1; max-width: 350px; margin: 0 30px; }
+        .search-container input {
+            width: 100%; padding: 12px 15px 12px 45px; border-radius: 12px; border: none;
+            background: rgba(255,255,255,0.1); color: white; outline: none; transition: 0.3s;
+        }
+        .search-container input::placeholder { color: rgba(255,255,255,0.7); }
+        .search-container input:focus { background: white; color: #333; box-shadow: 0 0 0 4px rgba(249, 217, 73, 0.3); }
+        .search-container i { position: absolute; left: 15px; top: 14px; color: rgba(255,255,255,0.6); }
+
+        .stats-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 30px; }
+        
+        .resumen-card {
+            background: white; padding: 25px; border-radius: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 6px solid var(--insignia-amarillo);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        .card-header { 
+            background: #fff; padding: 25px; border-bottom: 1px solid #f1f5f9; 
+            font-weight: 700; color: var(--insignia-azul-dark); font-size: 1.2em;
+            display: flex; align-items: center; gap: 12px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 18px 25px; text-align: left; color: #64748b; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; }
+        td { padding: 18px 25px; border-bottom: 1px solid #f1f5f9; }
+        tr:hover { background-color: #fbfcfd; }
+        
+        .talla-badge { background: #e0f2fe; color: var(--insignia-azul-dark); padding: 5px 12px; border-radius: 8px; font-weight: 700; }
+        .stock-alerta { color: var(--insignia-rojo); font-weight: 800; background: #fee2e2; padding: 5px 10px; border-radius: 8px; }
+
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 10px; font-size: 0.9em; }
+        .btn-add { background: var(--insignia-amarillo); color: #000; }
+        .btn-venta { background: #10b981; color: white; }
+        .btn-logout { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px; border-radius: 12px; }
+        .btn-logout:hover { background: var(--insignia-rojo); border-color: var(--insignia-rojo); }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); overflow-y: auto; }
+        .modal-content { 
+            background: white; 
+            margin: 2% auto; 
+            padding: 30px; 
+            width: 90%; 
+            max-width: 500px; 
+            max-height: 90vh; 
+            border-radius: 24px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            overflow-y: auto; 
+            position: relative;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #475569; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-family: inherit; box-sizing: border-box; }
+        
+        #cartItemsList { max-height: 150px; overflow-y: auto; background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .cart-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo-section">
+                <img src="INSIGNIA_COLEGIO.png" alt="Logo" class="logo-img">
+                <div>
+                    <h1 style="margin:0; font-size:1.2rem; letter-spacing: 1px; font-weight: 800;">MIS TALENTOS</h1>
+                    <small style="opacity: 0.8;">Panel Administrativo</small>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar uniforme o talla..." onkeyup="filterTable()">
+            </div>
+
+            <div style="display:flex; gap:15px; align-items: center;">
+                <a href="reportes.html" style="color:white; text-decoration:none; font-weight:500; font-size:0.9em; margin-right:10px;"><i class="fas fa-chart-pie"></i> Reportes</a>
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">-</div>
+                    <span class="user-name" id="userNameHeader">Usuario</span>
+                </div>
+                <button class="btn btn-logout" onclick="logout()"><i class="fas fa-power-off"></i></button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="resumen-card">
+                <div>
+                    <span style="color: #64748b; font-size: 0.8rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Valor Total en Almacén</span>
+                    <h2 id="valorTotalAlmacen" style="margin:8px 0 0; color: var(--insignia-azul-dark); font-size: 2.2rem;">S/. 0.00</h2>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn btn-add" onclick="openAddModal()"><i class="fas fa-plus"></i> Nuevo Ingreso</button>
+                    <button class="btn btn-venta" onclick="openCartModal()">
+                        <i class="fas fa-shopping-bag"></i> Registrar Venta
+                    </button>
+                </div>
+            </div>
+            <div class="resumen-card" style="border-left-color: var(--insignia-azul);">
+                <div>
+                    <span style="color: #64748b; font-size: 0.8rem; text-transform: uppercase; font-weight: 700;">Estado del Sistema</span>
+                    <p style="margin:8px 0 0; font-weight: 600; color: #10b981;"><i class="fas fa-circle" style="font-size: 0.7em;"></i> Conectado al Servidor</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-boxes-stacked" style="color: var(--insignia-rojo)"></i> Control de Stock Actual
+            </div>
+            <div id="uniformes-list">
+                <p style="padding:40px; text-align:center; color:#94a3b8;">Cargando inventario...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="addUniformModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color: var(--insignia-azul-dark);"><i class="fas fa-plus-circle"></i> Nueva Prenda</h3>
+            <form id="addUniformForm">
+                <div class="form-group"><label>Nombre de Prenda</label><input type="text" id="addPrenda" required placeholder="Ej: Casaca de Invierno"></div>
+                <div class="form-group">
+                    <label>Talla</label>
+                    <select id="addTalla" required>
+                        <option value="">Seleccionar...</option>
+                        <optgroup label="Niños"><option>4</option><option>6</option><option>8</option><option>10</option><option>12</option><option>14</option><option>16</option></optgroup>
+                        <optgroup label="Adultos"><option>S</option><option>M</option><option>L</option><option>XL</option></optgroup>
+                    </select>
+                </div>
+                <div class="form-group"><label>Stock Inicial</label><input type="number" id="addCantidad" value="0" min="0"></div>
+                <div class="form-group"><label>Precio de Venta (S/.)</label><input type="number" id="addPrecio" step="0.10" placeholder="0.00"></div>
+                <button type="submit" class="btn btn-venta" style="width:100%; justify-content: center;">Guardar Producto</button>
+                <button type="button" class="btn" style="width:100%; margin-top:10px; justify-content: center; background:#f1f5f9;" onclick="closeModal('addUniformModal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="movementModal" class="modal">
+        <div class="modal-content">
+            <h3 id="movementModalTitle" style="margin-top:0;"></h3>
+            <form id="movementForm">
+                <input type="hidden" id="movementIdUniforme">
+                <input type="hidden" id="movementTipo">
+                <div class="form-group"><label>Cantidad de Unidades</label><input type="number" id="movementCantidad" required min="1"></div>
+                <div class="form-group">
+                    <label>Responsable de Operación</label>
+                    <select id="movementUsuario" required></select>
+                </div>
+                <button type="submit" class="btn btn-add" style="width:100%; justify-content: center;">Confirmar</button>
+                <button type="button" class="btn" style="width:100%; margin-top:10px; justify-content: center; background:#f1f5f9;" onclick="closeModal('movementModal')">Cerrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #10b981; margin-top:0;"><i class="fas fa-cart-plus"></i> Nueva Venta</h3>
+            <div class="form-group"><label>Cliente</label><input type="text" id="cartCliente" placeholder="Nombre del padre/madre"></div>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                <div class="form-group">
+                    <label>Seleccionar Prenda</label>
+                    <select id="cartSelectUniforme" onchange="updateCartPrice()"></select>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <div class="form-group" style="flex:1"><label>Cant.</label><input type="number" id="cartCant" value="1" min="1"></div>
+                    <div class="form-group" style="flex:1"><label>Precio</label><input type="text" id="cartPrice" readonly style="background:#f1f5f9"></div>
+                    <button class="btn btn-add" onclick="addToCart()" style="align-self: flex-end; margin-bottom: 18px;">Añadir</button>
+                </div>
+            </div>
+
+            <div id="cartItemsList"></div>
+            <div style="text-align: right; font-weight: 800; margin-bottom: 20px; font-size: 1.4rem; color: var(--insignia-azul-dark);">
+                Total: S/. <span id="cartTotalText">0.00</span>
+            </div>
+            
+            <button class="btn btn-venta" onclick="processSale()" style="width:100%; justify-content: center; padding:15px;">FINALIZAR VENTA</button>
+            <button type="button" class="btn" style="width:100%; margin-top:10px; justify-content: center; background:#f1f5f9;" onclick="closeModal('cartModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const usuarioActual = localStorage.getItem('usuario_actual');
+        const API_URL = 'http://localhost:3001/api';
+        let fullInventory = [];
+        let currentCart = [];
+
+        if (!token) window.location.href = 'login.html';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(usuarioActual) {
+                document.getElementById('userNameHeader').innerText = usuarioActual;
+                document.getElementById('userInitial').innerText = usuarioActual.charAt(0).toUpperCase();
+            }
+            loadUniformes();
+            
+            const userSelect = document.getElementById('movementUsuario');
+            if(userSelect) {
+                userSelect.innerHTML = `
+                    <option value="1" ${usuarioActual==='Maria'?'selected':''}>Maria</option>
+                    <option value="2" ${usuarioActual==='Liz'?'selected':''}>Liz</option>`;
+            }
+        });
+
+        async function loadUniformes() {
+            try {
+                const res = await fetch(`${API_URL}/uniformes`, { headers: {'Authorization': `Bearer ${token}`} });
+                fullInventory = await res.json();
+                renderTable(fullInventory);
+                fillCartSelect();
+                calcularTotalLocal(fullInventory); // Cálculo local del total
+            } catch (e) { console.error(e); }
+        }
+
+        // Función corregida para calcular el valor total sin peticiones extra
+        function calcularTotalLocal(data) {
+            const total = data.reduce((acc, item) => {
+                return acc + (parseInt(item.Cantidad) * parseFloat(item.Precio));
+            }, 0);
+            const elementoTotal = document.getElementById('valorTotalAlmacen');
+            if (elementoTotal) {
+                elementoTotal.innerText = `S/. ${total.toLocaleString('es-PE', {minimumFractionDigits: 2})}`;
+            }
+        }
+
+        function renderTable(data) {
+            let html = `<table><thead><tr><th>Prenda</th><th>Talla</th><th>Stock</th><th>Precio</th><th style="text-align:center">Acciones</th></tr></thead><tbody>`;
+            data.forEach(u => {
+                const alerta = u.Cantidad < 5 ? 'stock-alerta' : '';
+                html += `<tr>
+                    <td><b style="color:#334155">${u.Prenda}</b></td>
+                    <td><span class="talla-badge">${u.Talla}</span></td>
+                    <td><span class="${alerta}">${u.Cantidad} un.</span></td>
+                    <td style="color: var(--insignia-azul-dark); font-weight:700;">S/. ${parseFloat(u.Precio).toFixed(2)}</td>
+                    <td style="text-align:center">
+                        <button class="btn" style="padding:6px 12px; background:#f1f5f9;" onclick="openMovementModal(${u.ID_Uniforme}, '${u.Prenda}', 'entrada')"><i class="fas fa-plus" style="color:#10b981"></i></button>
+                        <button class="btn" style="padding:6px 12px; background:#f1f5f9;" onclick="openMovementModal(${u.ID_Uniforme}, '${u.Prenda}', 'salida')"><i class="fas fa-minus" style="color:#ef4444"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('uniformes-list').innerHTML = html + `</tbody></table>`;
+        }
+
+        function filterTable() {
+            const filter = document.getElementById("searchInput").value.toLowerCase();
+            const filtered = fullInventory.filter(u => u.Prenda.toLowerCase().includes(filter) || u.Talla.toLowerCase().includes(filter));
+            renderTable(filtered);
+        }
+
+        function openAddModal() { document.getElementById('addUniformModal').style.display = 'block'; }
+        function openCartModal() {
+            currentCart = [];
+            document.getElementById('cartCliente').value = '';
+            renderCart();
+            document.getElementById('cartModal').style.display = 'block';
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function fillCartSelect() {
+            const select = document.getElementById('cartSelectUniforme');
+            select.innerHTML = fullInventory.map(u => `<option value="${u.ID_Uniforme}">${u.Prenda} (Talla: ${u.Talla})</option>`).join('');
+            updateCartPrice();
+        }
+
+        function updateCartPrice() {
+            const id = document.getElementById('cartSelectUniforme').value;
+            const item = fullInventory.find(u => u.ID_Uniforme == id);
+            document.getElementById('cartPrice').value = item ? `S/. ${item.Precio}` : '';
+        }
+
+        function addToCart() {
+            const id = document.getElementById('cartSelectUniforme').value;
+            const cant = parseInt(document.getElementById('cartCant').value);
+            const item = fullInventory.find(u => u.ID_Uniforme == id);
+
+            if(cant > item.Cantidad) return Swal.fire('Error', 'Stock insuficiente', 'error');
+
+            currentCart.push({
+                id_uniforme: item.ID_Uniforme,
+                prenda: item.Prenda,
+                talla: item.Talla,
+                cantidad_vendida: cant,
+                precio_unitario: item.Precio
+            });
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            let total = 0;
+            list.innerHTML = currentCart.map(c => {
+                total += (c.cantidad_vendida * c.precio_unitario);
+                return `<div class="cart-item"><span>${c.prenda} (T:${c.talla}) x${c.cantidad_vendida}</span><b>S/. ${(c.cantidad_vendida * c.precio_unitario).toFixed(2)}</b></div>`;
+            }).join('') || '<p style="text-align:center; color:#94a3b8">Carrito vacío</p>';
+            document.getElementById('cartTotalText').innerText = total.toFixed(2);
+        }
+
+        async function processSale() {
+            const cliente = document.getElementById('cartCliente').value;
+            if(!cliente || currentCart.length === 0) return Swal.fire('Atención', 'Complete los datos', 'warning');
+
+            const body = {
+                cliente_nombre: cliente,
+                id_usuario_gestor: usuarioActual === 'Maria' ? 1 : 2,
+                total: parseFloat(document.getElementById('cartTotalText').innerText),
+                detalles: currentCart
+            };
+
+            const res = await fetch(`${API_URL}/ventas`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                body: JSON.stringify(body)
+            });
+
+            if(res.ok) {
+                Swal.fire('¡Venta Exitosa!', 'El stock ha sido actualizado', 'success');
+                closeModal('cartModal');
+                loadUniformes();
+            }
+        }
+
+        function openMovementModal(id, name, tipo) {
+            document.getElementById('movementModalTitle').innerText = `${tipo === 'entrada' ? 'Añadir' : 'Retirar'} Stock: ${name}`;
+            document.getElementById('movementIdUniforme').value = id;
+            document.getElementById('movementTipo').value = tipo;
+            document.getElementById('movementModal').style.display = 'block';
+        }
+
+        document.getElementById('movementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const tipo = document.getElementById('movementTipo').value;
+            const body = {
+                id_uniforme: parseInt(document.getElementById('movementIdUniforme').value),
+                [tipo === 'entrada' ? 'cantidad_entrada' : 'cantidad_salida']: parseInt(document.getElementById('movementCantidad').value),
+                id_usuario: parseInt(document.getElementById('movementUsuario').value)
+            };
+            await fetch(`${API_URL}/movimientos/${tipo}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                body: JSON.stringify(body)
+            });
+            closeModal('movementModal');
+            loadUniformes();
+            Swal.fire('Actualizado', 'Movimiento registrado', 'success');
+        });
+
+        document.getElementById('addUniformForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                prenda: document.getElementById('addPrenda').value,
+                talla: document.getElementById('addTalla').value,
+                cantidad: parseInt(document.getElementById('addCantidad').value),
+                precio: parseFloat(document.getElementById('addPrecio').value)
+            };
+            await fetch(`${API_URL}/uniformes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                body: JSON.stringify(body)
+            });
+            closeModal('addUniformModal');
+            loadUniformes();
+            Swal.fire('Creado', 'Nueva prenda añadida', 'success');
+        });
+
+        function logout() { 
+            localStorage.clear(); 
+            window.location.href = 'login.html'; 
+        }
+    </script>
+</body>
+</html>

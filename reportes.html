@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - I.E.P. Mis Talentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --insignia-rojo: #e62429;
+            --insignia-azul: #5086c1;
+            --insignia-azul-oscuro: #2c5282;
+            --insignia-amarillo: #f9d949;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            background-color: var(--bg); 
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; box-sizing: border-box; }
+
+        .header-report {
+            background: linear-gradient(135deg, var(--insignia-azul-oscuro) 0%, var(--insignia-azul) 100%);
+            padding: 25px 35px;
+            border-radius: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 5px solid var(--insignia-amarillo);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-info h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; font-weight: 800; }
+        .header-info p { margin: 5px 0 0; opacity: 0.9; font-size: 0.9rem; font-weight: 500; }
+
+        .filter-section {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            flex-wrap: wrap;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 150px; }
+        .filter-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-group input { 
+            padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; font-family: inherit; transition: 0.3s;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+            transition: 0.3s;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .btn-primary { background: var(--insignia-azul); color: white; }
+        .btn-yellow { background: var(--insignia-amarillo); color: #000; }
+        .btn-white { background: white; color: var(--text-main); border: 1px solid #e2e8f0; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        .report-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            padding: 20px 25px;
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 700;
+            color: var(--insignia-azul-oscuro);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+        }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { 
+            background: #f8fafc; padding: 15px 25px; 
+            text-align: left; font-size: 0.75rem; 
+            text-transform: uppercase; color: var(--text-muted);
+            letter-spacing: 1px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        td { padding: 16px 25px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; vertical-align: middle; }
+        
+        .fila-total {
+            background-color: #f8fafc;
+            font-weight: 800;
+            color: var(--insignia-azul-oscuro);
+            border-top: 2px solid var(--insignia-azul);
+        }
+
+        .detalle-prendas {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .detalle-prendas li {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: #334155;
+            font-size: 0.8rem;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .detalle-prendas li i {
+            color: var(--insignia-azul);
+            margin-right: 4px;
+        }
+
+        .badge { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; }
+        .badge-entrada { background: #dcfce7; color: #166534; }
+        .badge-salida { background: #fee2e2; color: var(--insignia-rojo); }
+        .badge-user { background: #e0f2fe; color: var(--insignia-azul-oscuro); }
+
+        @media print {
+            .filter-section, .btn-group, .nav-btns, .btn-white, .btn-yellow, .btn-primary { display: none !important; }
+            .container { width: 100%; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header-report">
+            <div class="header-info">
+                <h1><i class="fas fa-file-invoice-dollar"></i> CENTRO DE REPORTES</h1>
+                <p>I.E.P. Mis Talentos - Gestión Administrativa</p>
+            </div>
+            <div class="nav-btns" style="display:flex; gap:10px;">
+                <a href="index.html" class="btn btn-white"><i class="fas fa-arrow-left"></i> Volver</a>
+                <button onclick="exportarExcel()" class="btn btn-yellow"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                <button onclick="window.print()" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir</button>
+            </div>
+        </header>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Desde:</label>
+                <input type="date" id="fechaInicio">
+            </div>
+            <div class="filter-group">
+                <label>Hasta:</label>
+                <input type="date" id="fechaFin">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="aplicarFiltros()" class="btn btn-primary"><i class="fas fa-search"></i> Filtrar</button>
+                <button onclick="limpiarFiltros()" class="btn btn-white">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="card-title">
+                <i class="fas fa-exchange-alt" style="color: var(--insignia-azul);"></i> 
+                MOVIMIENTOS DE ALMACÉN (Auditoría)
+            </div>
+            <div id="tabla-movimientos" class="table-responsive">
+                <p style="padding:40px; text-align:center; color: var(--text-muted);">Cargando movimientos...</p>
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="card-title">
+                <i class="fas fa-shopping-bag" style="color: var(--insignia-rojo);"></i> 
+                REPORTE DE VENTAS REALIZADAS
+            </div>
+            <div id="tabla-ventas" class="table-responsive">
+                <p style="padding:40px; text-align:center; color: var(--text-muted);">Cargando ventas...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        
+        // Configuración automática de URL
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001/api' 
+            : window.location.origin + '/api';
+
+        console.log("Conectando a API en:", API_URL);
+
+        let dataMovimientos = [];
+        let dataVentas = [];
+
+        if (!token) window.location.href = 'login.html';
+
+        async function cargarData() {
+            try {
+                const headers = {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+
+                const [resM, resV] = await Promise.all([
+                    fetch(`${API_URL}/movimientos`, { headers }),
+                    fetch(`${API_URL}/ventas`, { headers })
+                ]);
+
+                if (!resM.ok || !resV.ok) {
+                    throw new Error('Error al obtener datos del servidor');
+                }
+
+                dataMovimientos = await resM.json();
+                dataVentas = await resV.json();
+                renderizarTablas(dataMovimientos, dataVentas);
+            } catch (e) { 
+                console.error("Error en cargarData:", e);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo conectar con el servidor. Verifica que el servidor esté activo.',
+                    confirmButtonColor: '#2c5282'
+                });
+            }
+        }
+
+        function renderizarTablas(movs, vens) {
+            // --- RENDER MOVIMIENTOS ---
+            let hMov = `<table><thead><tr><th>Fecha</th><th>Operación</th><th>Prenda</th><th>Talla</th><th>Cantidad</th><th>Usuario</th></tr></thead><tbody>`;
+            if(!movs || movs.length === 0) {
+                hMov += `<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">No hay registros</td></tr>`;
+            } else {
+                movs.forEach(m => {
+                    const tipoClase = m.Tipo === 'ENTRADA' ? 'badge-entrada' : 'badge-salida';
+                    hMov += `<tr>
+                        <td style="color:var(--text-muted)">${new Date(m.Fecha_Hora).toLocaleDateString()}</td>
+                        <td><span class="badge ${tipoClase}">${m.Tipo}</span></td>
+                        <td><strong style="color:#334155">${m.Prenda}</strong></td>
+                        <td><b style="color:var(--insignia-azul)">${m.Talla}</b></td>
+                        <td><b>${m.Cantidad}</b></td>
+                        <td><span class="badge badge-user">${m.Usuario_Registro || 'Sistema'}</span></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('tabla-movimientos').innerHTML = hMov + "</tbody></table>";
+
+            // --- RENDER VENTAS ---
+            let hVen = `<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Uniformes Vendidos</th><th>Monto Total</th><th>Atendido por</th></tr></thead><tbody>`;
+            let totalGeneral = 0;
+
+            if(!vens || vens.length === 0) {
+                hVen += `<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">No hay ventas registradas</td></tr>`;
+            } else {
+                vens.forEach(v => {
+                    const monto = parseFloat(v.Total) || 0;
+                    totalGeneral += monto;
+                    const detalleString = v.Detalle_Productos || "Sin detalle";
+                    const listaProductos = detalleString.split(',');
+                    let listaHtml = `<ul class="detalle-prendas">`;
+                    listaProductos.forEach(p => {
+                        if(p.trim() !== "") listaHtml += `<li><i class="fas fa-tag"></i> ${p.trim()}</li>`;
+                    });
+                    listaHtml += `</ul>`;
+
+                    hVen += `<tr>
+                        <td style="color:var(--text-muted)">${new Date(v.Fecha_Venta).toLocaleDateString()}</td>
+                        <td><strong style="color:#334155">${v.Cliente_Nombre}</strong></td>
+                        <td>${listaHtml}</td>
+                        <td style="color:var(--insignia-azul-oscuro); font-weight:800;">S/. ${monto.toFixed(2)}</td>
+                        <td><span class="badge badge-user">${v.Gestor_Usuario || 'Admin'}</span></td>
+                    </tr>`;
+                });
+
+                hVen += `<tr class="fila-total">
+                    <td colspan="3" style="text-align:right; font-size:1rem;">TOTAL ACUMULADO:</td>
+                    <td style="font-size:1.1rem; color:var(--insignia-rojo);">S/. ${totalGeneral.toFixed(2)}</td>
+                    <td></td>
+                </tr>`;
+            }
+            document.getElementById('tabla-ventas').innerHTML = hVen + "</tbody></table>";
+        }
+
+        function aplicarFiltros() {
+            const inicio = document.getElementById('fechaInicio').value;
+            const fin = document.getElementById('fechaFin').value;
+            if(!inicio || !fin) return Swal.fire('Aviso', 'Seleccione ambas fechas', 'info');
+            const fIn = new Date(inicio + "T00:00:00");
+            const fFi = new Date(fin + "T23:59:59");
+            const movFil = dataMovimientos.filter(m => { 
+                const f = new Date(m.Fecha_Hora); 
+                return f >= fIn && f <= fFi; 
+            });
+            const venFil = dataVentas.filter(v => { 
+                const f = new Date(v.Fecha_Venta); 
+                return f >= fIn && f <= fFi; 
+            });
+            renderizarTablas(movFil, venFil);
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('fechaInicio').value = '';
+            document.getElementById('fechaFin').value = '';
+            renderizarTablas(dataMovimientos, dataVentas);
+        }
+
+        function exportarExcel() {
+            const wb = XLSX.utils.book_new();
+            const wsMov = XLSX.utils.table_to_sheet(document.querySelector("#tabla-movimientos table"));
+            const wsVen = XLSX.utils.table_to_sheet(document.querySelector("#tabla-ventas table"));
+            XLSX.utils.book_append_sheet(wb, wsMov, "Auditoria_Stock");
+            XLSX.utils.book_append_sheet(wb, wsVen, "Reporte_Ventas");
+            XLSX.writeFile(wb, `Reporte_MisTalentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        document.addEventListener('DOMContentLoaded', cargarData);
+    </script>
+</body>
+</html>
